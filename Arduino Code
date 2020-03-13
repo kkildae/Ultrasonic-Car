@@ -1,0 +1,94 @@
+// Adds the Servo.h and Stepper.h library. The stepper libray was added to the original code.
+#include<Servo.h>
+#include <Stepper.h>
+
+// Tells how many steps the the stepper will originally have.
+#define STEPS 32
+
+// Initialises variables, servos and pins.
+int trigPin=6;
+int echoPin=7;
+long duration;
+int distance;
+// Added to original code to learn the mean of all inputs.
+int distanceMean;
+int distanceAverage;
+Servo servo;
+// Added to original code to set the stepper pins.
+Stepper stepper (STEPS, 8, 10, 9, 11);
+void setup()
+{
+  // Sets the sensors trigger pin to output and echo pin to output.
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  // Starts the serial.
+  Serial.begin(9600);
+  // Sets the servo pin 3.
+  servo.attach(3);
+  // Added to original code to set the stepper speed.
+  stepper.setSpeed(1000);
+}
+
+
+void loop()
+{
+  // Creates a for loop till i reaches 165.
+  for(int i=15;i<=165;i++)
+  {
+    //  Writes servo angle as i.
+    servo.write(i);
+    // Calls the calculate distance 
+    distance=calculateDistance();
+    // Prints the i and distance to the serial.
+    Serial.print(i);
+    Serial.print(",");
+    Serial.print(distance);
+    Serial.print(".");
+    // Added to original code to add all the printed values together.
+    distanceAverage = distanceAverage + distance;
+    }
+    // Repeats last for loop till it goes down to 15.
+  for(int i=165;i>15;i--)
+  {
+    servo.write(i);
+    distance=calculateDistance();  
+    Serial.print(i);
+    Serial.print(",");
+    Serial.print(distance);
+    Serial.print(".");
+    distanceAverage = distanceAverage + distance;
+  }
+
+  // Added to original code to calculate the mean of all of the sensors inputs.
+   distanceMean = distanceAverage/300;
+   // Added to original code so if the sensor is to close to an object.
+   if (distanceMean <= 10){
+    // Added to original code to make the stepper take 1000 steps backwards.
+    stepper.step(1000);
+    // Added to original code to resets the Mean.
+    distanceAverage = 0;
+  } else{
+    // Added to original code to make the stepper take 1000 steps backwards.
+    stepper.step(-1000);
+    // Added to original code to resets the Mean.
+    distanceAverage = 0;
+  }
+}
+
+
+int calculateDistance()
+{
+  //Turns the sensor on and off to get a variable.
+  digitalWrite(trigPin,LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin,HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin,LOW);
+
+  // Finds the time it takes to recieve the pulse from the echopin.
+  duration=pulseIn(echoPin,HIGH);
+  // Calculates the distance from the time * the speed of sound /2.
+  distance=duration*0.034/2;
+  // Sends the distance when its called.
+  return distance;
+}  
